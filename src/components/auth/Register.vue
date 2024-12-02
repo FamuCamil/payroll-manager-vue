@@ -2,17 +2,38 @@
   <div class="register">
     <h1>Crear cuenta</h1>
 
-    <form class="ui form">
+    <form class="ui form" @submit.prevent="onRegister">
       <div class="field">
-        <input type="text" placeholder="Correo electrónico" />
+        <input
+          type="text"
+          placeholder="Correo electrónico"
+          v-model="formData.email"
+          :class="{ error: formError.email }"
+        />
       </div>
       <div class="field">
-        <input type="password" placeholder="Contraseña" />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          v-model="formData.password"
+          :class="{ error: formError.password }"
+        />
       </div>
       <div class="field">
-        <input type="password" placeholder="Repetir contraseña" />
+        <input
+          type="password"
+          placeholder="Repetir contraseña"
+          v-model="formData.repeatPassword"
+          :class="{ error: formError.repeatPassword }"
+        />
       </div>
-      <button type="submit" class="ui button positive fluid">Registrar</button>
+      <button
+        type="submit"
+        class="ui button positive fluid"
+        :class="{ loading }"
+      >
+        Registrar
+      </button>
     </form>
 
     <p @click="changeForm">Iniciar sesión</p>
@@ -20,10 +41,56 @@
 </template>
 
 <script>
+import { ref } from "vue";
+import * as Yup from "yup";
+import { auth } from "@/utils/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+
 export default {
   name: "Register",
   props: {
     changeForm: Function,
+  },
+  setup() {
+    let formData = {};
+    let formError = ref({});
+    let loading = ref(false);
+
+    const schemaForm = Yup.object().shape({
+      email: Yup.string().email(true).required(true),
+      password: Yup.string().required(true),
+      repeatPassword: Yup.string()
+        .required(true)
+        .oneOf([Yup.ref("password")], true),
+    });
+
+    const onRegister = async () => {
+      loading.value = true;
+      formError.value = {};
+
+      try {
+        await schemaForm.validate(formData, { abortEarly: false });
+
+        try {
+          const { email, password } = formData;
+          await createUserWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+          console.error(error);
+        }
+      } catch (err) {
+        err.inner.forEach((error) => {
+          formError.value[error.path] = error.message;
+        });
+      }
+      loading.value = false;
+    };
+
+    return {
+      formData,
+      onRegister,
+      formError,
+      loading,
+    };
   },
 };
 </script>
