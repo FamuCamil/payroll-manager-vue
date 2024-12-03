@@ -25,3 +25,7 @@ pnpm-debug.log*
 
 # Yarn
 yarn.lock
+
+# Firebase
+src/utils/firebase.js
+.firebase
