@@ -73,14 +73,9 @@ export default {
 
         try {
           const { email, password } = formData;
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password
-          );
-          console.log("Usuario registrado con éxito:", userCredential.user);
+          await createUserWithEmailAndPassword(auth, email, password);
         } catch (error) {
-          console.error("Error al registrar el usuario:", error);
+          console.error(error);
         }
       } catch (err) {
         err.inner.forEach((error) => {
