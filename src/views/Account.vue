@@ -10,6 +10,12 @@
         </p>
         <ChangeName></ChangeName>
       </div>
+      <div class="account__section">
+        <p class="title">
+          Cambiar Email <span>({{ user.email }})</span>
+        </p>
+        <ChangeEmail></ChangeEmail>
+      </div>
     </BasicLayout>
   </div>
 </template>
@@ -17,6 +23,7 @@
 <script>
 import BasicLayout from "@/layouts/BasicLayout.vue";
 import ChangeName from "@/components/account/ChangeName.vue";
+import ChangeEmail from "@/components/account/ChangeEmail.vue";
 import { computed } from "vue";
 import { useStore } from "vuex";
 
@@ -25,6 +32,7 @@ export default {
   components: {
     BasicLayout,
     ChangeName,
+    ChangeEmail,
   },
   setup() {
     const store = useStore();
