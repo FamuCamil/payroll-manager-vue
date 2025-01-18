@@ -29,7 +29,9 @@
           </div>
         </div>
       </div>
-      <button class="ui button positive">Subir nómina</button>
+      <button class="ui button positive" :class="{ loading }">
+        Subir nómina
+      </button>
       <p v-if="error">{{ error }}</p>
     </form>
   </div>
@@ -38,11 +40,15 @@
 <script>
 import { ref } from "vue";
 import { v4 as uuidv4 } from "uuid";
-import { auth } from "@/utils/firebase";
+import { auth, db, addDoc, collection } from "@/utils/firebase";
+import { supabase } from "@/utils/supabase";
 
 export default {
   name: "UploadPayroll",
-  setup() {
+  props: {
+    getPayrolls: Function,
+  },
+  setup(props) {
     let showForm = ref(false);
     let file = ref(null);
     let date = ref(null);
@@ -64,15 +70,38 @@ export default {
       }
     };
 
-    const handlerSubmit = () => {
-      // console.log("subiendo nomina");
+    const handlerSubmit = async () => {
       if (file.value && date.value) {
         loading.value = true;
         try {
           const nameFile = uuidv4();
+          const idUser = auth.currentUser.uid;
+          //! ruta de donde se guardará el archivo: idUsuario/nombreArchivo.pdf
+          const filePath = `${idUser}/${nameFile}.pdf`;
+
+          await supabase.storage.from("payrolls").upload(filePath, file.value);
+
+          const payrollUrl = await supabase.storage
+            .from("payrolls")
+            .getPublicUrl(filePath);
+
+          await addDoc(collection(db, idUser), {
+            payrollUrl: payrollUrl.data.publicUrl,
+            date: new Date(date.value),
+            dateString: date.value,
+          });
+          props.getPayrolls();
         } catch (error) {
           console.log(error);
         }
+        loading.value = false;
+        file.value = null;
+        date.value = null;
+        showForm.value = false;
+        error.value = null;
+        document.getElementById("file").value = "";
+      } else {
+        error.value = "Sube una nómina y selecciona una fecha";
       }
     };
 
